@@ -440,6 +440,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             )
                                             else -> e.message
                                         }
+                                        if (errorMessage != null) {
+                                            updateManga.awaitUpdateError(manga.id, errorMessage)
+                                        }
                                         failedUpdates.add(manga to errorMessage)
                                     }
                                 }

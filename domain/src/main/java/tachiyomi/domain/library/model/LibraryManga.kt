@@ -21,4 +21,7 @@ data class LibraryManga(
         get() = bookmarkCount > 0
 
     val hasStarted = readCount > 0
+
+    val hasError
+        get() = manga.errorString != null
 }

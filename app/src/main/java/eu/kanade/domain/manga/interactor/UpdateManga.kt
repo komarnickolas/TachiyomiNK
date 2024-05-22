@@ -82,6 +82,7 @@ class UpdateManga(
                 status = remoteManga.status.toLong(),
                 updateStrategy = remoteManga.update_strategy,
                 initialized = true,
+                errorString = "",
             ),
         )
     }
@@ -112,5 +113,9 @@ class UpdateManga(
         return mangaRepository.update(
             MangaUpdate(id = mangaId, favorite = favorite, dateAdded = dateAdded),
         )
+    }
+
+    suspend fun awaitUpdateError(mangaId: Long, errorString: String): Boolean {
+        return mangaRepository.update(MangaUpdate(id = mangaId, errorString = errorString))
     }
 }
