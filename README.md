@@ -1,6 +1,6 @@
 | Preview Builds | Release Builds | Mihon Support Server |
 |-------|----------|----------|
-| [![Preview](https://github.com/jobobby04/TachiyomiNKPreview/workflows/Remote%20Dispatch%20Build%20App/badge.svg)](https://github.com/jobobby04/TachiyomiNKPreview/releases) | [![stable release](https://img.shields.io/github/release/jobobby04/tachiyomink.svg?maxAge=3600&label=download)](https://github.com/jobobby04/tachiyomink/releases/latest) | [![Discord](https://img.shields.io/discord/1195734228319617024.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/mihon) |
+| [![Preview](https://github.com/komarnickolas/TachiyomiNKPreview/workflows/Remote%20Dispatch%20Build%20App/badge.svg)](https://github.com/komarnickolas/TachiyomiNKPreview/releases) | [![stable release](https://img.shields.io/github/release/komarnickolas/tachiyomink.svg?maxAge=3600&label=download)](https://github.com/komarnickolas/tachiyomink/releases/latest) | [![Discord](https://img.shields.io/discord/1195734228319617024.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/mihon) |
 
 
 # ![app icon](./.github/readme-images/app-icon.png)TachiyomiNK
@@ -63,9 +63,9 @@ Additional features for some extensions, features include custom description, op
 * Tsumino
 
 ## Download
-Get the app from our [releases page](https://github.com/jobobby04/tachiyomink/releases/latest).
+Get the app from our [releases page](https://github.com/komarnickolas/tachiyomink/releases/latest).
 
-If you want to try new features before they get to the stable release, you can download the preview version [here](https://github.com/jobobby04/tachiyominkpreview/releases).
+If you want to try new features before they get to the stable release, you can download the preview version [here](https://github.com/komarnickolas/tachiyominkpreview/releases).
 
 ## Issues, Feature Requests and Contributing
 
@@ -73,7 +73,7 @@ Please make sure to read the full guidelines. Your issue may be closed without w
 
 <details><summary>Issues</summary>
 
-1. **Before reporting a new issue, take a look at the [FAQ](https://tachiyomi.org/docs/faq/general), the [changelog](https://github.com/jobobby04/tachiyomink/releases) and the already opened [issues](https://github.com/jobobby04/tachiyomink/issues).**
+1. **Before reporting a new issue, take a look at the [FAQ](https://tachiyomi.org/docs/faq/general), the [changelog](https://github.com/komarnickolas/tachiyomink/releases) and the already opened [issues](https://github.com/komarnickolas/tachiyomink/issues).**
 2. If you are unsure, ask here: [![Discord](https://img.shields.io/discord/1195734228319617024.svg)](https://discord.gg/mihon)
 
 </details>

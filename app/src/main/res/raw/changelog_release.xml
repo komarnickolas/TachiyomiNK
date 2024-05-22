@@ -161,7 +161,7 @@
     <changelogversion versionName="1.7.0" changeDate="Jun 1,2021">
         <changelogtext>[b]Based on Tachiyomi stable 0.11.1(from 0.10.12)[/b]</changelogtext>
         <changelogtext>[b]New[/b] Add reader bottom button customization (by E-SHL)</changelogtext>
-        <changelogtext>Add more lewd tag checks (Jobobby04, E-SHL)</changelogtext>
+        <changelogtext>Add more lewd tag checks (komarnickolas, E-SHL)</changelogtext>
         <changelogtext>Convert chapter bottom sheet to a dialog</changelogtext>
         <changelogtext>Exh login menu now supports a custom igneous cookie</changelogtext>
         <changelogtext>Exh sync fixes, now doesn't stop on missing galleries</changelogtext>

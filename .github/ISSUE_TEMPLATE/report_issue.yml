@@ -96,7 +96,7 @@ body:
           required: true
         - label: I have gone through the [FAQ](https://mihon.app/docs/faq/general) and [troubleshooting guide](https:/mihon.app/docs/guides/troubleshooting/).
           required: true
-        - label: I have updated the app to version **[1.10.5](https://github.com/jobobby04/tachiyomink/releases/latest)**.
+        - label: I have updated the app to version **[1.10.5](https://github.com/komarnickolas/tachiyomink/releases/latest)**.
           required: true
         - label: I have updated all installed extensions.
           required: true
