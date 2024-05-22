@@ -85,7 +85,7 @@ data class ComicInfo(
     val categories: CategoriesTachiyomi?,
     val source: SourceMihon?,
     // SY -->
-    val padding: PaddingTachiyomiSY?,
+    val padding: PaddingTachiyomiNK?,
     // SY <--
 ) {
     @XmlElement(false)
@@ -167,8 +167,8 @@ data class ComicInfo(
 
     // SY -->
     @Serializable
-    @XmlSerialName("PaddingTachiyomiSY", "http://www.w3.org/2001/XMLSchema", "tysy")
-    data class PaddingTachiyomiSY(@XmlValue(true) val value: String = "")
+    @XmlSerialName("PaddingTachiyomiNK", "http://www.w3.org/2001/XMLSchema", "tysy")
+    data class PaddingTachiyomiNK(@XmlValue(true) val value: String = "")
     // SY <--
 }
 
