@@ -22,6 +22,5 @@ data class LibraryManga(
 
     val hasStarted = readCount > 0
 
-    val hasError
-        get() = manga.errorString != null
+    val hasError = manga.errorString.isNullOrBlank()
 }

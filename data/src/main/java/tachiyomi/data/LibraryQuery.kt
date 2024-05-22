@@ -41,7 +41,6 @@ private val mapper = { cursor: SqlCursor ->
         lastRead = cursor.getLong(29)!!,
         bookmarkCount = cursor.getDouble(30)!!,
         category = cursor.getLong(31)!!,
-        errorString = cursor.getString(32)!!,
     )
 }
 

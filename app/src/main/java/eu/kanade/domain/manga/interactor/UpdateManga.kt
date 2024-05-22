@@ -115,7 +115,7 @@ class UpdateManga(
         )
     }
 
-    suspend fun awaitUpdateError(mangaId: Long, errorString: String): Boolean {
+    suspend fun awaitUpdateError(mangaId: Long, errorString: String?): Boolean {
         return mangaRepository.update(MangaUpdate(id = mangaId, errorString = errorString))
     }
 }

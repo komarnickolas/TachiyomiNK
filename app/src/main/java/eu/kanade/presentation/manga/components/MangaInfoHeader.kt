@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.CallMerge
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.PersonOutline
@@ -100,6 +101,7 @@ fun MangaInfoBox(
     title: String,
     author: String?,
     artist: String?,
+    errorString: String?,
     sourceName: String,
     isStubSource: Boolean,
     coverDataProvider: () -> Manga,
@@ -141,6 +143,7 @@ fun MangaInfoBox(
                     doSearch = doSearch,
                     author = author,
                     artist = artist,
+                    errorString = errorString,
                     status = status,
                     sourceName = sourceName,
                     isStubSource = isStubSource,
@@ -154,6 +157,7 @@ fun MangaInfoBox(
                     doSearch = doSearch,
                     author = author,
                     artist = artist,
+                    errorString = errorString,
                     status = status,
                     sourceName = sourceName,
                     isStubSource = isStubSource,
@@ -380,6 +384,7 @@ private fun MangaAndSourceTitlesLarge(
     doSearch: (query: String, global: Boolean) -> Unit,
     author: String?,
     artist: String?,
+    errorString: String?,
     status: Long,
     sourceName: String,
     isStubSource: Boolean,
@@ -402,6 +407,7 @@ private fun MangaAndSourceTitlesLarge(
             doSearch = doSearch,
             author = author,
             artist = artist,
+            errorString = errorString,
             status = status,
             sourceName = sourceName,
             isStubSource = isStubSource,
@@ -419,6 +425,7 @@ private fun MangaAndSourceTitlesSmall(
     doSearch: (query: String, global: Boolean) -> Unit,
     author: String?,
     artist: String?,
+    errorString: String?,
     status: Long,
     sourceName: String,
     isStubSource: Boolean,
@@ -446,6 +453,7 @@ private fun MangaAndSourceTitlesSmall(
                 doSearch = doSearch,
                 author = author,
                 artist = artist,
+                errorString = errorString,
                 status = status,
                 sourceName = sourceName,
                 isStubSource = isStubSource,
@@ -460,6 +468,7 @@ private fun ColumnScope.MangaContentInfo(
     doSearch: (query: String, global: Boolean) -> Unit,
     author: String?,
     artist: String?,
+    errorString: String?,
     status: Long,
     sourceName: String,
     isStubSource: Boolean,
@@ -540,6 +549,29 @@ private fun ColumnScope.MangaContentInfo(
     }
 
     Spacer(modifier = Modifier.height(2.dp))
+
+    if (!errorString.isNullOrBlank()) {
+        Row(
+            modifier = Modifier.secondaryItemAlpha(),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = errorString,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier
+                    .clickableNoIndication(
+                        onClick = { context.copyToClipboard(errorString, errorString) },
+                    ),
+                textAlign = textAlign,
+            )
+        }
+    }
 
     Row(
         modifier = Modifier.secondaryItemAlpha(),
