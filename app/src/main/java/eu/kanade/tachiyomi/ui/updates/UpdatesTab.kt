@@ -30,6 +30,7 @@ import eu.kanade.tachiyomi.ui.manga.MangaScreen
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.updates.UpdatesScreenModel.Event
 import kotlinx.coroutines.flow.collectLatest
+import mihon.feature.errors.ErrorsScreen
 import mihon.feature.upcoming.UpcomingScreen
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
@@ -93,6 +94,7 @@ object UpdatesTab : Tab {
                 context.startActivity(intent)
             },
             onCalendarClicked = { navigator.push(UpcomingScreen()) },
+            onErrorsClicked = { navigator.push(ErrorsScreen()) },
         )
 
         val onDismissDialog = { screenModel.setDialog(null) }
@@ -103,6 +105,7 @@ object UpdatesTab : Tab {
                     onConfirm = { screenModel.deleteChapters(dialog.toDelete) },
                 )
             }
+
             null -> {}
         }
 
@@ -112,6 +115,7 @@ object UpdatesTab : Tab {
                     Event.InternalError -> screenModel.snackbarHostState.showSnackbar(
                         context.stringResource(MR.strings.internal_error),
                     )
+
                     is Event.LibraryUpdateTriggered -> {
                         val msg = if (event.started) {
                             MR.strings.updating_library

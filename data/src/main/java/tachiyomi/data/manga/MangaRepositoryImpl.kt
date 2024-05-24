@@ -83,6 +83,12 @@ class MangaRepositoryImpl(
         }
     }
 
+    override suspend fun getErrorManga(): Flow<List<Manga>> {
+        return handler.subscribeToList {
+            mangasQueries.getErrorManga(MangaMapper::mapManga)
+        }
+    }
+
     override suspend fun resetViewerFlags(): Boolean {
         return try {
             handler.await { mangasQueries.resetViewerFlags() }

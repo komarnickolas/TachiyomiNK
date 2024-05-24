@@ -129,6 +129,11 @@ AND favorite = 1
 AND status IN :statuses
 ORDER BY next_update ASC;
 
+getErrorManga:
+SELECT *
+FROM mangas
+WHERE errorString IS NOT NULL AND errorString != '';
+
 resetViewerFlags:
 UPDATE mangas
 SET viewer = 0;

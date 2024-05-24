@@ -27,6 +27,8 @@ interface MangaRepository {
 
     suspend fun getUpcomingManga(statuses: Set<Long>): Flow<List<Manga>>
 
+    suspend fun getErrorManga(): Flow<List<Manga>>
+
     suspend fun resetViewerFlags(): Boolean
 
     suspend fun setMangaCategories(mangaId: Long, categoryIds: List<Long>)
