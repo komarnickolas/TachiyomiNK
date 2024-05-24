@@ -3,7 +3,6 @@ package mihon.feature.errors
 import androidx.compose.ui.util.fastMap
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import eu.kanade.core.util.insertSeparators
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -22,9 +21,9 @@ class ErrorsScreenModel(
         screenModelScope.launch {
             getErrorManga.subscribe().collectLatest {
                 mutableState.update { state ->
-                    val upcomingItems = it.toErrorsUIModels()
+                    val errorItems = it.toErrorsUIModels()
                     state.copy(
-                        items = upcomingItems,
+                        items = errorItems,
                     )
                 }
             }

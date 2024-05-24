@@ -85,7 +85,7 @@ object MoreTab : Tab {
             onClickAbout = { navigator.push(SettingsScreen(SettingsScreen.Destination.About)) },
             // SY -->
             onClickBatchAdd = { navigator.push(BatchAddScreen()) },
-            onClickUpdates = { navigator.push(UpdatesTab) },
+            onClickUpdates = { navigator.push(UpdatesTab()) },
             onClickHistory = { navigator.push(HistoryTab) },
             // SY <--
         )
