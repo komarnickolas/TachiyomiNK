@@ -425,6 +425,7 @@ class MigrationListScreenModel(
                 id = prevManga.id,
                 favorite = false,
                 dateAdded = 0,
+                errorString = "",
             )
             mangaUpdate = mangaUpdate.copy(
                 dateAdded = prevManga.dateAdded,
