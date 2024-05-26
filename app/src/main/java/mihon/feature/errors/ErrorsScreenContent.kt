@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.SwapCalls
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -17,7 +17,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.components.AppBar
 import kotlinx.collections.immutable.ImmutableList
 import mihon.feature.errors.components.ErrorItem
-import tachiyomi.core.common.Constants
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
@@ -28,12 +27,13 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun ErrorsScreenContent(
     state: ErrorsScreenModel.State,
     onClickError: (manga: Manga) -> Unit,
+    onClickMigrate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     Scaffold(
-        topBar = { ErrorsToolbar() },
+        topBar = { ErrorsToolbar(onClickMigrate) },
         modifier = modifier,
     ) { paddingValues ->
         ErrorScreenImpl(
@@ -46,7 +46,7 @@ fun ErrorsScreenContent(
 }
 
 @Composable
-private fun ErrorsToolbar() {
+private fun ErrorsToolbar(onClickMigrate: () -> Unit) {
     val navigator = LocalNavigator.currentOrThrow
     val uriHandler = LocalUriHandler.current
 
@@ -54,10 +54,10 @@ private fun ErrorsToolbar() {
         title = "Errors",
         navigateUp = navigator::pop,
         actions = {
-            IconButton(onClick = { uriHandler.openUri(Constants.URL_HELP_UPCOMING) }) {
+            IconButton(onClick = onClickMigrate) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = stringResource(MR.strings.library_errors_help),
+                    imageVector = Icons.Outlined.SwapCalls,
+                    contentDescription = stringResource(MR.strings.migrate),
                 )
             }
         },
@@ -67,7 +67,7 @@ private fun ErrorsToolbar() {
 @Composable
 private fun ErrorScreenImpl(
     listState: LazyListState,
-    items: ImmutableList<ErrorsUIModel>,
+    items: ImmutableList<Manga>,
     paddingValues: PaddingValues,
     onClickError: (manga: Manga) -> Unit,
 ) {
@@ -77,21 +77,12 @@ private fun ErrorScreenImpl(
     ) {
         items(
             items = items,
-            key = { "upcoming-${it.hashCode()}" },
-            contentType = {
-                when (it) {
-                    is ErrorsUIModel.Item -> "item"
-                }
-            },
+            key = { "error-${it.hashCode()}" },
         ) { item ->
-            when (item) {
-                is ErrorsUIModel.Item -> {
-                    ErrorItem(
-                        error = item.manga,
-                        onClick = { onClickError(item.manga) },
-                    )
-                }
-            }
+            ErrorItem(
+                error = item,
+                onClick = { onClickError(item) },
+            )
         }
     }
 }

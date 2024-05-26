@@ -21,20 +21,13 @@ class ErrorsScreenModel(
         screenModelScope.launch {
             getErrorManga.subscribe().collectLatest {
                 mutableState.update { state ->
-                    val errorItems = it.toErrorsUIModels()
-                    state.copy(
-                        items = errorItems,
-                    )
+                    state.copy(items = it.toImmutableList())
                 }
             }
         }
     }
 
-    private fun List<Manga>.toErrorsUIModels(): ImmutableList<ErrorsUIModel> {
-        return fastMap { ErrorsUIModel.Item(it) }.toImmutableList()
-    }
-
     data class State(
-        val items: ImmutableList<ErrorsUIModel> = persistentListOf(),
+        val items: ImmutableList<Manga> = persistentListOf(),
     )
 }
