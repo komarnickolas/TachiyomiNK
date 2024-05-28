@@ -120,13 +120,15 @@ private fun LibraryRegularToolbar(
         actions = {
             val filterTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current
             val errorTint = if (isErrorMode) MaterialTheme.colorScheme.error else LocalContentColor.current
+            val errorBadge = if (errorCount > 0) errorCount.toString() else null
             AppBarActions(
                 persistentListOf(
                     AppBar.Action(
                         title = stringResource(MR.strings.action_show_errors),
                         icon = Icons.Outlined.Error,
                         iconTint = errorTint,
-                        iconBadge = errorCount.toString(),
+                        iconBadge = errorBadge,
+                        hidden = errorCount <= 0,
                         onClick = onErrorsClicked,
                     ),
                     AppBar.Action(

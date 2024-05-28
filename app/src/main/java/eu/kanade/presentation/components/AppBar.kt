@@ -204,33 +204,35 @@ fun AppBarActions(
     var showMenu by remember { mutableStateOf(false) }
 
     actions.filterIsInstance<AppBar.Action>().map {
-        TooltipBox(
-            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-            tooltip = {
-                PlainTooltip {
-                    Text(it.title)
-                }
-            },
-            state = rememberTooltipState(),
-        ) {
-            IconButton(
-                onClick = it.onClick,
-                enabled = it.enabled,
+        if(!it.hidden) {
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+                    PlainTooltip {
+                        Text(it.title)
+                    }
+                },
+                state = rememberTooltipState(),
             ) {
-                BadgedBox(
-                    badge = {
-                        if (!it.iconBadge.isNullOrBlank()) {
-                            Badge {
-                                Text(text = it.iconBadge.toString())
-                            }
-                        }
-                    },
+                IconButton(
+                    onClick = it.onClick,
+                    enabled = it.enabled,
                 ) {
-                    Icon(
-                        imageVector = it.icon,
-                        tint = it.iconTint ?: LocalContentColor.current,
-                        contentDescription = it.title,
-                    )
+                    BadgedBox(
+                        badge = {
+                            if (!it.iconBadge.isNullOrBlank()) {
+                                Badge {
+                                    Text(text = it.iconBadge.toString())
+                                }
+                            }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = it.icon,
+                            tint = it.iconTint ?: LocalContentColor.current,
+                            contentDescription = it.title,
+                        )
+                    }
                 }
             }
         }
@@ -438,6 +440,7 @@ sealed interface AppBar {
         val iconBadge: String? = null,
         val onClick: () -> Unit,
         val enabled: Boolean = true,
+        val hidden: Boolean = false,
     ) : AppBarAction
 
     data class OverflowAction(

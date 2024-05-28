@@ -194,7 +194,7 @@ object HomeScreen : Screen() {
 
     @Composable
     private fun RowScope.NavigationBarItem(
-        tab: eu.kanade.presentation.util.Tab/* SY --> */,
+        tab: eu.kanade.presentation.util.Tab,/* SY --> */
         alwaysShowLabel: Boolean, /* SY <-- */
     ) {
         val tabNavigator = LocalTabNavigator.current
@@ -279,6 +279,7 @@ object HomeScreen : Screen() {
                             }
                         }
                     }
+
                     BrowseTab::class.isInstance(tab) -> {
                         val count by produceState(initialValue = 0) {
                             Injekt.get<SourcePreferences>().extensionUpdatesCount().changes()
