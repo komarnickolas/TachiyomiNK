@@ -132,7 +132,8 @@ ORDER BY next_update ASC;
 getErrorManga:
 SELECT *
 FROM mangas
-WHERE errorString IS NOT NULL AND errorString != '';
+WHERE errorString IS NOT NULL AND errorString != ''
+ORDER BY errorString;
 
 resetViewerFlags:
 UPDATE mangas

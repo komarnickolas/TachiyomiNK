@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -43,6 +46,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
@@ -50,12 +55,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.clearFocusOnSoftKeyboardHide
 import tachiyomi.presentation.core.util.runOnEnterKeyPressed
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 import tachiyomi.presentation.core.util.showSoftKeyboard
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 const val SEARCH_DEBOUNCE_MILLIS = 250L
 
@@ -206,11 +217,21 @@ fun AppBarActions(
                 onClick = it.onClick,
                 enabled = it.enabled,
             ) {
-                Icon(
-                    imageVector = it.icon,
-                    tint = it.iconTint ?: LocalContentColor.current,
-                    contentDescription = it.title,
-                )
+                BadgedBox(
+                    badge = {
+                        if (!it.iconBadge.isNullOrBlank()) {
+                            Badge {
+                                Text(text = it.iconBadge.toString())
+                            }
+                        }
+                    },
+                ) {
+                    Icon(
+                        imageVector = it.icon,
+                        tint = it.iconTint ?: LocalContentColor.current,
+                        contentDescription = it.title,
+                    )
+                }
             }
         }
     }
@@ -414,6 +435,7 @@ sealed interface AppBar {
         val title: String,
         val icon: ImageVector,
         val iconTint: Color? = null,
+        val iconBadge: String? = null,
         val onClick: () -> Unit,
         val enabled: Boolean = true,
     ) : AppBarAction

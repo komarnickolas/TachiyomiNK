@@ -11,6 +11,7 @@ object LibraryGroup {
     const val BY_STATUS = 2
     const val BY_TRACK_STATUS = 3
     const val UNGROUPED = 4
+    const val BY_ERROR = 5
 
     fun groupTypeStringRes(type: Int, hasCategories: Boolean = true): StringResource {
         return when (type) {

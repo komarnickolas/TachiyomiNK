@@ -88,6 +88,10 @@ class LibraryPreferences(
     )
 
     // SY -->
+    fun filterError() = preferenceStore.getEnum(
+        "pref_filter_library_error_v2",
+        TriState.DISABLED,
+    )
     fun filterLewd() = preferenceStore.getEnum(
         "pref_filter_library_lewd_v2",
         TriState.DISABLED,

@@ -140,12 +140,15 @@ object LibraryTab : Tab {
                 )
                 val tabVisible = state.showCategoryTabs && state.categories.size > 1
                 LibraryToolbar(
+                    errorCount = state.errorCount,
+                    isErrorMode = state.isErrorMode,
                     hasActiveFilters = state.hasActiveFilters,
                     selectedCount = state.selection.size,
                     title = title,
                     onClickUnselectAll = screenModel::clearSelection,
                     onClickSelectAll = { screenModel.selectAll(screenModel.activeCategoryIndex) },
                     onClickInvertSelection = { screenModel.invertSelection(screenModel.activeCategoryIndex) },
+                    onErrorsClicked = screenModel::toggleErrorView,
                     onClickFilter = screenModel::showSettingsDialog,
                     onClickRefresh = {
                         onClickRefresh(state.categories[screenModel.activeCategoryIndex.coerceAtMost(state.categories.lastIndex)])
@@ -227,6 +230,7 @@ object LibraryTab : Tab {
                         ),
                     )
                 }
+
                 else -> {
                     LibraryContent(
                         categories = state.categories,
@@ -285,6 +289,7 @@ object LibraryTab : Tab {
                     // SY <--
                 )
             }
+
             is LibraryScreenModel.Dialog.ChangeCategory -> {
                 ChangeCategoryDialog(
                     initialSelection = dialog.initialSelection,
@@ -299,6 +304,7 @@ object LibraryTab : Tab {
                     },
                 )
             }
+
             is LibraryScreenModel.Dialog.DeleteManga -> {
                 DeleteLibraryMangaDialog(
                     containsLocalManga = dialog.manga.any(Manga::isLocal),
@@ -309,6 +315,7 @@ object LibraryTab : Tab {
                     },
                 )
             }
+
             LibraryScreenModel.Dialog.SyncFavoritesWarning -> {
                 SyncFavoritesWarningDialog(
                     onDismissRequest = onDismissRequest,
@@ -318,6 +325,7 @@ object LibraryTab : Tab {
                     },
                 )
             }
+
             LibraryScreenModel.Dialog.SyncFavoritesConfirm -> {
                 SyncFavoritesConfirmDialog(
                     onDismissRequest = onDismissRequest,
@@ -327,6 +335,7 @@ object LibraryTab : Tab {
                     },
                 )
             }
+
             null -> {}
         }
 

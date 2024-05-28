@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import mihon.feature.errors.ErrorsScreen
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -76,7 +75,7 @@ object HomeScreen : Screen() {
 
     private val tabs = listOf(
         LibraryTab,
-        UpdatesTab(),
+        UpdatesTab,
         HistoryTab,
         BrowseTab(),
         MoreTab,
@@ -175,7 +174,7 @@ object HomeScreen : Screen() {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
                             is Tab.Library -> LibraryTab
-                            is Tab.Updates -> UpdatesTab()
+                            is Tab.Updates -> UpdatesTab
                             Tab.History -> HistoryTab
                             is Tab.Browse -> BrowseTab(it.toExtensions)
                             is Tab.More -> MoreTab
@@ -186,9 +185,6 @@ object HomeScreen : Screen() {
                         }
                         if (it is Tab.More && it.toDownloads) {
                             navigator.push(DownloadQueueScreen)
-                        }
-                        if (it is Tab.Updates && it.toErrors) {
-                            navigator.push(ErrorsScreen())
                         }
                     }
                 }
@@ -327,8 +323,8 @@ object HomeScreen : Screen() {
     }
 
     sealed interface Tab {
-        data class Library(val mangaIdToOpen: Long? = null) : Tab
-        data class Updates(val toErrors: Boolean = false) : Tab
+        data class Library(val mangaIdToOpen: Long? = null, val toErrors: Boolean = false) : Tab
+        data object Updates : Tab
         data object History : Tab
         data class Browse(val toExtensions: Boolean = false) : Tab
         data class More(val toDownloads: Boolean) : Tab

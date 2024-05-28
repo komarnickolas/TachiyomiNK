@@ -147,6 +147,12 @@ private fun ColumnScope.FilterPage(
         )
     }
     // SY -->
+    val filterError by screenModel.libraryPreferences.filterError().collectAsState()
+    TriStateItem(
+        label = stringResource(MR.strings.error),
+        state = filterError,
+        onClick = { screenModel.toggleFilter(LibraryPreferences::filterError) },
+    )
     val filterLewd by screenModel.libraryPreferences.filterLewd().collectAsState()
     TriStateItem(
         label = stringResource(SYMR.strings.lewd),
