@@ -24,7 +24,6 @@ import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
 import eu.kanade.domain.track.interactor.TrackChapter
 import mihon.data.repository.ExtensionRepoRepositoryImpl
-import mihon.domain.errors.interactor.GetErrorManga
 import mihon.domain.extensionrepo.interactor.CreateExtensionRepo
 import mihon.domain.extensionrepo.interactor.DeleteExtensionRepo
 import mihon.domain.extensionrepo.interactor.GetExtensionRepo
@@ -69,6 +68,7 @@ import tachiyomi.domain.history.interactor.UpsertHistory
 import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.manga.interactor.FetchInterval
 import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
+import tachiyomi.domain.manga.interactor.GetLibraryErrorManga
 import tachiyomi.domain.manga.interactor.GetFavorites
 import tachiyomi.domain.manga.interactor.GetLibraryManga
 import tachiyomi.domain.manga.interactor.GetManga
@@ -119,7 +119,7 @@ class DomainModule : InjektModule {
         addFactory { GetMangaByUrlAndSourceId(get()) }
         addFactory { GetManga(get()) }
         addFactory { GetNextChapters(get(), get(), get(), get()) }
-        addFactory { GetErrorManga(get()) }
+        addFactory { GetLibraryErrorManga(get()) }
         addFactory { GetUpcomingManga(get()) }
         addFactory { ResetViewerFlags(get()) }
         addFactory { SetMangaChapterFlags(get()) }

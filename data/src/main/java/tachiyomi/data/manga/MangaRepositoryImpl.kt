@@ -58,11 +58,22 @@ class MangaRepositoryImpl(
         // return handler.awaitList { libraryViewQueries.library(MangaMapper::mapLibraryManga) }
     }
 
+    override suspend fun getLibraryErrorManga(): List<LibraryManga> {
+        return handler.awaitListExecutable {
+            (handler as AndroidDatabaseHandler).getLibraryQuery("M.errorString != '' AND M.errorString IS NOT NULL AND M.favorite = 1")
+        }.map(MangaMapper::mapLibraryView)
+        // return handler.awaitList { libraryViewQueries.library(MangaMapper::mapLibraryManga) }
+    }
+
     override fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>> {
         return handler.subscribeToList { libraryViewQueries.library(MangaMapper::mapLibraryManga) }
             // SY -->
             .map { getLibraryManga() }
         // SY <--
+    }
+
+    override fun getErrorManga(): Flow<List<Manga>> {
+        return handler.subscribeToList { mangasQueries.getErrorManga(MangaMapper::mapManga) }
     }
 
     override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Manga>> {
@@ -80,12 +91,6 @@ class MangaRepositoryImpl(
         val epochMillis = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000
         return handler.subscribeToList {
             mangasQueries.getUpcomingManga(epochMillis, statuses, MangaMapper::mapManga)
-        }
-    }
-
-    override suspend fun getErrorManga(): Flow<List<Manga>> {
-        return handler.subscribeToList {
-            mangasQueries.getErrorManga(MangaMapper::mapManga)
         }
     }
 

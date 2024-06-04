@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -77,9 +78,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
-import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.TriState
-import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.lang.compareToWithCollator
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.launchNonCancellable
@@ -98,6 +97,7 @@ import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.library.model.LibrarySort
 import tachiyomi.domain.library.model.sort
 import tachiyomi.domain.library.service.LibraryPreferences
+import tachiyomi.domain.manga.interactor.GetLibraryErrorManga
 import tachiyomi.domain.manga.interactor.GetIdsOfFavoriteMangaWithMetadata
 import tachiyomi.domain.manga.interactor.GetLibraryManga
 import tachiyomi.domain.manga.interactor.GetMergedMangaById
@@ -127,6 +127,7 @@ typealias LibraryMap = Map<Category, List<LibraryItem>>
 
 class LibraryScreenModel(
     private val getLibraryManga: GetLibraryManga = Injekt.get(),
+    private val getLibraryErrorManga: GetLibraryErrorManga = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracksPerManga: GetTracksPerManga = Injekt.get(),
     private val getNextChapters: GetNextChapters = Injekt.get(),
@@ -163,6 +164,7 @@ class LibraryScreenModel(
 
     init {
         screenModelScope.launchIO {
+            mutableState.update { state -> state.copy(errorCount = getLibraryErrorManga.await().size) }
             combine(
                 state.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
@@ -569,7 +571,10 @@ class LibraryScreenModel(
                 .groupBy { it.libraryManga.category }
         }
 
-        return combine(getCategories.subscribe(), libraryMangasFlow) { categories, libraryManga ->
+        return combine(
+            getCategories.subscribe(),
+            libraryMangasFlow,
+        ) { categories, libraryManga ->
             val displayCategories = if (libraryManga.isNotEmpty() && !libraryManga.containsKey(0)) {
                 categories.fastFilterNot { it.isSystemCategory }
             } else {
@@ -1355,19 +1360,7 @@ class LibraryScreenModel(
     }
 
     fun toggleErrorView() {
-        mutableState.update {
-            val isErrorMode = !it.isErrorMode
-            toggleFilter(LibraryPreferences::filterError, isErrorMode)
-            it.copy(isErrorMode = isErrorMode)
-        }
-    }
-
-    private fun toggleFilter(preference: (LibraryPreferences) -> Preference<TriState>, toggle: Boolean) {
-        if (toggle) {
-            preference(libraryPreferences).getAndSet { TriState.ENABLED_IS }
-        } else {
-            preference(libraryPreferences).getAndSet { TriState.DISABLED }
-        }
+        mutableState.update { it.copy(isErrorMode = !it.isErrorMode) }
     }
     // SY <--
 
@@ -1407,20 +1400,13 @@ class LibraryScreenModel(
         val showSyncExh: Boolean = false,
         val ogCategories: List<Category> = emptyList(),
         val groupType: Int = LibraryGroup.BY_DEFAULT,
+        val errorCount: Int = 0,
         // SY <--
     ) {
         private val libraryCount by lazy {
             library.values
                 .flatten()
                 .fastDistinctBy { it.libraryManga.manga.id }
-                .size
-        }
-
-        val errorCount by lazy {
-            library.values
-                .flatten()
-                .fastDistinctBy { it.libraryManga.manga.id }
-                .filter { it.libraryManga.hasError }
                 .size
         }
 
@@ -1453,6 +1439,7 @@ class LibraryScreenModel(
                     manga.status != manga.ogStatus
             }
         }
+
         // SY <--
 
         fun getLibraryItemsByCategoryId(categoryId: Long): List<LibraryItem>? {
@@ -1460,7 +1447,8 @@ class LibraryScreenModel(
         }
 
         fun getLibraryItemsByPage(page: Int): List<LibraryItem> {
-            return library.values.toTypedArray().getOrNull(page).orEmpty()
+            val values = library.values.toTypedArray().getOrNull(page).orEmpty()
+            return if (isErrorMode) values.filter { it.libraryManga.hasError } else values
         }
 
         fun getMangaCountForCategory(category: Category): Int? {
