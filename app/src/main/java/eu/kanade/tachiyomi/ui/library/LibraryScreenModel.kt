@@ -1360,6 +1360,7 @@ class LibraryScreenModel(
     }
 
     fun toggleErrorView() {
+        libraryPreferences.clearFilters()
         mutableState.update { it.copy(isErrorMode = !it.isErrorMode) }
     }
     // SY <--

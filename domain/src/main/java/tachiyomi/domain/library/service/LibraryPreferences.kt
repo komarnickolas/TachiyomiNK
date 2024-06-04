@@ -41,6 +41,7 @@ class LibraryPreferences(
             DEVICE_ONLY_ON_WIFI,
         ),
     )
+
     fun autoUpdateMangaRestrictions() = preferenceStore.getStringSet(
         "library_update_manga_restriction",
         setOf(
@@ -92,6 +93,7 @@ class LibraryPreferences(
         "pref_filter_library_error_v2",
         TriState.DISABLED,
     )
+
     fun filterLewd() = preferenceStore.getEnum(
         "pref_filter_library_lewd_v2",
         TriState.DISABLED,
@@ -104,6 +106,12 @@ class LibraryPreferences(
         "pref_filter_library_tracked_${id}_v2",
         TriState.DISABLED,
     )
+
+    fun clearFilters() {
+        preferenceStore.getAll().forEach { (filter) ->
+            preferenceStore.getEnum(filter, TriState.DISABLED).set(TriState.DISABLED)
+        }
+    }
 
     // endregion
 
