@@ -129,10 +129,16 @@ AND favorite = 1
 AND status IN :statuses
 ORDER BY next_update ASC;
 
-getErrorManga:
+getErrorLibraryManga:
 SELECT *
 FROM mangas
-WHERE errorString IS NOT NULL AND errorString != ''
+WHERE errorString IS NOT NULL AND errorString != '' AND favorite = 1
+ORDER BY errorString;
+
+getErrorLibraryMangaCount:
+SELECT COUNT(*)
+FROM mangas
+WHERE errorString IS NOT NULL AND errorString != '' AND favorite = 1
 ORDER BY errorString;
 
 resetViewerFlags:

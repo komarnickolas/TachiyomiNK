@@ -69,7 +69,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -108,6 +107,7 @@ import tachiyomi.domain.manga.model.CustomMangaInfo
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.manga.model.applyFilter
+import tachiyomi.domain.manga.repository.MangaRepository
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.GetTracksPerManga
@@ -127,7 +127,6 @@ typealias LibraryMap = Map<Category, List<LibraryItem>>
 
 class LibraryScreenModel(
     private val getLibraryManga: GetLibraryManga = Injekt.get(),
-    private val getLibraryErrorManga: GetLibraryErrorManga = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracksPerManga: GetTracksPerManga = Injekt.get(),
     private val getNextChapters: GetNextChapters = Injekt.get(),
@@ -164,7 +163,6 @@ class LibraryScreenModel(
 
     init {
         screenModelScope.launchIO {
-            mutableState.update { state -> state.copy(errorCount = getLibraryErrorManga.await().size) }
             combine(
                 state.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
@@ -1360,7 +1358,7 @@ class LibraryScreenModel(
     }
 
     fun toggleErrorView() {
-        libraryPreferences.clearFilters()
+        libraryPreferences.clearLibraryFilters()
         mutableState.update { it.copy(isErrorMode = !it.isErrorMode) }
     }
     // SY <--
@@ -1401,7 +1399,8 @@ class LibraryScreenModel(
         val showSyncExh: Boolean = false,
         val ogCategories: List<Category> = emptyList(),
         val groupType: Int = LibraryGroup.BY_DEFAULT,
-        val errorCount: Int = 0,
+        val getLibraryErrorManga: GetLibraryErrorManga = Injekt.get(),
+        val mangaRepository: MangaRepository = Injekt.get(),
         // SY <--
     ) {
         private val libraryCount by lazy {
@@ -1409,6 +1408,10 @@ class LibraryScreenModel(
                 .flatten()
                 .fastDistinctBy { it.libraryManga.manga.id }
                 .size
+        }
+
+        val errorCount = runBlocking {
+            mangaRepository.getErrorLibraryMangaCount().first().toInt()
         }
 
         val isLibraryEmpty by lazy { libraryCount == 0 }

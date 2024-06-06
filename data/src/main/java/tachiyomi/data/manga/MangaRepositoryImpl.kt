@@ -1,6 +1,7 @@
 package tachiyomi.data.manga
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
@@ -72,8 +73,12 @@ class MangaRepositoryImpl(
         // SY <--
     }
 
-    override fun getErrorManga(): Flow<List<Manga>> {
-        return handler.subscribeToList { mangasQueries.getErrorManga(MangaMapper::mapManga) }
+    override fun getErrorLibraryManga(): Flow<List<Manga>> {
+        return handler.subscribeToList { mangasQueries.getErrorLibraryManga(MangaMapper::mapManga) }
+    }
+
+    override fun getErrorLibraryMangaCount(): Flow<Long> {
+        return handler.subscribeToOne { mangasQueries.getErrorLibraryMangaCount() }
     }
 
     override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Manga>> {

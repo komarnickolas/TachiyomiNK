@@ -23,7 +23,10 @@ interface MangaRepository {
 
     fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>>
 
-    fun getErrorManga(): Flow<List<Manga>>
+    fun getErrorLibraryManga(): Flow<List<Manga>>
+
+    // SY <--
+    fun getErrorLibraryMangaCount(): Flow<Long>
 
     fun getFavoritesBySourceId(sourceId: Long): Flow<List<Manga>>
 
@@ -49,5 +52,4 @@ interface MangaRepository {
     suspend fun deleteManga(mangaId: Long)
 
     suspend fun getReadMangaNotInLibrary(): List<LibraryManga>
-    // SY <--
 }

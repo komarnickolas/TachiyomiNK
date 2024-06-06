@@ -107,9 +107,11 @@ class LibraryPreferences(
         TriState.DISABLED,
     )
 
-    fun clearFilters() {
+    fun clearLibraryFilters() {
         preferenceStore.getAll().forEach { (filter) ->
-            preferenceStore.getEnum(filter, TriState.DISABLED).set(TriState.DISABLED)
+            if (filter.startsWith("pref_filter_library_")) {
+                preferenceStore.getEnum(filter, TriState.DISABLED).set(TriState.DISABLED)
+            }
         }
     }
 
