@@ -30,6 +30,7 @@ import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibraryGroup
+import tachiyomi.domain.library.model.LibrarySplit
 import tachiyomi.domain.library.model.LibrarySort
 import tachiyomi.domain.library.model.sort
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -38,6 +39,7 @@ import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.CheckboxItem
 import tachiyomi.presentation.core.components.HeadingItem
 import tachiyomi.presentation.core.components.IconItem
+import tachiyomi.presentation.core.components.RadioItem
 import tachiyomi.presentation.core.components.SettingsChipRow
 import tachiyomi.presentation.core.components.SliderItem
 import tachiyomi.presentation.core.components.SortItem
@@ -62,6 +64,7 @@ fun LibrarySettingsDialog(
             stringResource(MR.strings.action_display),
             // SY -->
             stringResource(SYMR.strings.group),
+            stringResource(SYMR.strings.split),
             // SY <--
         ),
     ) { page ->
@@ -74,10 +77,12 @@ fun LibrarySettingsDialog(
                 0 -> FilterPage(
                     screenModel = screenModel,
                 )
+
                 1 -> SortPage(
                     category = category,
                     screenModel = screenModel,
                 )
+
                 2 -> DisplayPage(
                     screenModel = screenModel,
                 )
@@ -85,6 +90,10 @@ fun LibrarySettingsDialog(
                 3 -> GroupPage(
                     screenModel = screenModel,
                     hasCategories = hasCategories,
+                )
+
+                4 -> SplitPage(
+                    screenModel = screenModel,
                 )
                 // SY <--
             }
@@ -166,6 +175,7 @@ private fun ColumnScope.FilterPage(
         0 -> {
             // No trackers
         }
+
         1 -> {
             val service = trackers[0]
             val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsState()
@@ -175,6 +185,7 @@ private fun ColumnScope.FilterPage(
                 onClick = { screenModel.toggleTracker(service.id.toInt()) },
             )
         }
+
         else -> {
             HeadingItem(MR.strings.action_filter_tracked)
             trackers.map { service ->
@@ -186,6 +197,43 @@ private fun ColumnScope.FilterPage(
                 )
             }
         }
+    }
+}
+
+data class SplitMode(
+    val int: Int,
+    val nameRes: StringResource,
+)
+
+@Composable
+private fun ColumnScope.SplitPage(
+    screenModel: LibrarySettingsScreenModel,
+) {
+    val splits = remember {
+        buildList {
+            add(LibrarySplit.FILTER_FN_DOWNLOADED)
+            add(LibrarySplit.FILTER_FN_ERROR)
+            add(LibrarySplit.FILTER_FN_UNREAD)
+            add(LibrarySplit.FILTER_FN_STARTED)
+            add(LibrarySplit.FILTER_FN_BOOKMARKED)
+            add(LibrarySplit.FILTER_FN_COMPLETED)
+        }.map {
+            SplitMode(it, LibrarySplit.splitTypeStringRes(it))
+        }.toImmutableList()
+    }
+
+    splits.fastForEach {
+        CheckboxItem(
+            label = stringResource(it.nameRes),
+            checked = it.int == screenModel.split,
+            onClick = {
+                if (it.int != screenModel.split) {
+                    screenModel.setSplit(it.int)
+                } else {
+                    screenModel.setSplit(0)
+                }
+            },
+        )
     }
 }
 
@@ -247,6 +295,7 @@ private fun ColumnScope.SortPage(
                     } else {
                         LibrarySort.Direction.Descending
                     }
+
                     else -> if (sortDescending) LibrarySort.Direction.Descending else LibrarySort.Direction.Ascending
                 }
                 screenModel.setSort(category, mode, direction)

@@ -86,6 +86,7 @@ import tachiyomi.domain.UnsortedPreferences
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.SetMangaCategories
 import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.category.model.Split
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.chapter.interactor.GetMergedChaptersByMangaId
 import tachiyomi.domain.chapter.model.Chapter
@@ -94,6 +95,7 @@ import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibraryGroup
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.library.model.LibrarySort
+import tachiyomi.domain.library.model.LibrarySplit
 import tachiyomi.domain.library.model.sort
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetLibraryErrorManga
@@ -123,7 +125,9 @@ import java.util.Collections
 /**
  * Typealias for the library manga, using the category as keys, and list of manga as values.
  */
-typealias LibraryMap = Map<Category, List<LibraryItem>>
+typealias LibraryMap = Map<Category, SplitMap>
+typealias SplitMap = Map<Split, List<LibraryItem>>
+
 
 class LibraryScreenModel(
     private val getLibraryManga: GetLibraryManga = Injekt.get(),
@@ -175,26 +179,30 @@ class LibraryScreenModel(
                 // SY -->
                 combine(
                     state.map { it.groupType }.distinctUntilChanged(),
+                    state.map { it.splitType }.distinctUntilChanged(),
                     libraryPreferences.sortingMode().changes(),
-                    ::Pair,
+                    ::Triple,
                 ),
                 // SY <--
-            ) { searchQuery, library, tracks, (loggedInTrackers, _), (groupType, sort) ->
+            ) { searchQuery, library, tracks, (loggedInTrackers, _), (groupType, splitType, sort) ->
                 library
                     // SY -->
                     .applyGrouping(groupType)
+                    .applySplit(splitType)
                     // SY <--
                     .applyFilters(tracks, loggedInTrackers)
                     .applySort(tracks, /* SY --> */sort.takeIf { groupType != LibraryGroup.BY_DEFAULT } /* SY <-- */)
                     .mapValues { (_, value) ->
-                        if (searchQuery != null) {
-                            // Filter query
-                            // SY -->
-                            filterLibrary(value, searchQuery, loggedInTrackers)
-                            // SY <--
-                        } else {
-                            // Don't do anything
-                            value
+                        value.mapValues { (_, items) ->
+                            if (searchQuery != null) {
+                                // Filter query
+                                // SY -->
+                                filterLibrary(items, searchQuery, loggedInTrackers)
+                                // SY <--
+                            } else {
+                                // Don't do anything
+                                items
+                            }
                         }
                     }
             }
@@ -271,6 +279,14 @@ class LibraryScreenModel(
             .onEach {
                 mutableState.update { state ->
                     state.copy(groupType = it)
+                }
+            }
+            .launchIn(screenModelScope)
+
+        libraryPreferences.splitLibraryBy().changes()
+            .onEach {
+                mutableState.update { state ->
+                    state.copy(splitType = it)
                 }
             }
             .launchIn(screenModelScope)
@@ -374,7 +390,7 @@ class LibraryScreenModel(
             // SY <--
         }
 
-        return this.mapValues { entry -> entry.value.fastFilter(filterFn) }
+        return this.mapValues { (_, values) -> values.mapValues { entry -> entry.value.fastFilter(filterFn) } }
     }
 
     /**
@@ -477,17 +493,19 @@ class LibraryScreenModel(
             }
         }
 
-        return this.mapValues { entry ->
-            // SY -->
-            val isAscending = groupSort?.isAscending ?: keys.find { it.id == entry.key.id }!!.sort.isAscending
-            // SY <--
-            val comparator = if ( /* SY --> */ isAscending /* SY <-- */) {
-                Comparator(sortFn)
-            } else {
-                Collections.reverseOrder(sortFn)
-            }
+        return this.mapValues { (_, values) ->
+            values.mapValues { entry ->
+                // SY -->
+                val isAscending = groupSort?.isAscending ?: keys.find { it.id == entry.key.id }!!.sort.isAscending
+                // SY <--
+                val comparator = if ( /* SY --> */ isAscending /* SY <-- */) {
+                    Comparator(sortFn)
+                } else {
+                    Collections.reverseOrder(sortFn)
+                }
 
-            entry.value.sortedWith(comparator.thenComparator(sortAlphabetically))
+                entry.value.sortedWith(comparator.thenComparator(sortAlphabetically))
+            }
         }
     }
 
@@ -584,13 +602,15 @@ class LibraryScreenModel(
                 state.copy(ogCategories = displayCategories)
             }
             // SY <--
-            displayCategories.associateWith { libraryManga[it.id].orEmpty() }
+            displayCategories.associateWith { libraryManga[it.id].orEmpty() }.mapValues { (_, items) ->
+                mapOf(Split(0, "") to items)
+            }
         }
     }
 
     // SY -->
     private fun LibraryMap.applyGrouping(groupType: Int): LibraryMap {
-        val items = when (groupType) {
+        return when (groupType) {
             LibraryGroup.BY_DEFAULT -> this
             LibraryGroup.UNGROUPED -> {
                 mapOf(
@@ -599,20 +619,34 @@ class LibraryScreenModel(
                         preferences.context.stringResource(SYMR.strings.ungrouped),
                         0,
                         0,
-                    ) to
-                        values.flatten().distinctBy { it.libraryManga.manga.id },
-                )
+                    ) to values,
+                ) as LibraryMap
             }
 
             else -> {
                 getGroupedMangaItems(
                     groupType = groupType,
-                    libraryManga = this.values.flatten().distinctBy { it.libraryManga.manga.id },
+                    libraryManga = this.values.map { it.values.flatten() }.flatten(),
                 )
             }
         }
+    }
 
-        return items
+    private fun LibraryMap.applySplit(splitType: Int): LibraryMap {
+        return when (splitType) {
+            LibrarySplit.FILTER_FN_UNREAD -> {
+                mapValues { (_, splits) ->
+                    val items = splits.values.flatten()
+                    val split = items.fastPartition { it.libraryManga.unreadCount > 0 }
+                    mapOf(
+                        Split(0, "Unread") to split.first,
+                        Split(1, "Read") to split.second,
+                    )
+                }
+            }
+
+            else -> this
+        }
     }
     // SY <--
 
@@ -899,6 +933,8 @@ class LibraryScreenModel(
         return withIOContext {
             state.value
                 .getLibraryItemsByCategoryId(state.value.categories[activeCategoryIndex].id)
+                ?.values
+                ?.flatten()
                 ?.randomOrNull()
         }
     }
@@ -1143,6 +1179,8 @@ class LibraryScreenModel(
                 }
 
                 val items = state.getLibraryItemsByCategoryId(manga.category)
+                    ?.values
+                    ?.flatten()
                     ?.fastMap { it.libraryManga }.orEmpty()
                 val lastMangaIndex = items.indexOf(lastSelected)
                 val curMangaIndex = items.indexOf(manga)
@@ -1169,6 +1207,8 @@ class LibraryScreenModel(
                 val categoryId = state.categories.getOrNull(index)?.id ?: -1
                 val selectedIds = list.fastMap { it.id }
                 state.getLibraryItemsByCategoryId(categoryId)
+                    ?.values
+                    ?.flatten()
                     ?.fastMapNotNull { item ->
                         item.libraryManga.takeUnless { it.id in selectedIds }
                     }
@@ -1182,7 +1222,7 @@ class LibraryScreenModel(
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
                 val categoryId = state.categories[index].id
-                val items = state.getLibraryItemsByCategoryId(categoryId)?.fastMap { it.libraryManga }.orEmpty()
+                val items = state.getLibraryItemsByCategoryId(categoryId)?.values?.flatten()?.fastMap { it.libraryManga }.orEmpty()
                 val selectedIds = list.fastMap { it.id }
                 val (toRemove, toAdd) = items.fastPartition { it.id in selectedIds }
                 val toRemoveIds = toRemove.fastMap { it.id }
@@ -1334,7 +1374,7 @@ class LibraryScreenModel(
                     )
                 }
             }
-        }.toSortedMap(compareBy { it.order })
+        }.toSortedMap(compareBy { it.order }).mapValues { (_, values) -> mapOf(Split(0, "") to values) }
     }
 
     fun runSync() {
@@ -1399,12 +1439,14 @@ class LibraryScreenModel(
         val showSyncExh: Boolean = false,
         val ogCategories: List<Category> = emptyList(),
         val groupType: Int = LibraryGroup.BY_DEFAULT,
+        val splitType: Int = LibrarySplit.NONE,
         val getLibraryErrorManga: GetLibraryErrorManga = Injekt.get(),
         val mangaRepository: MangaRepository = Injekt.get(),
         // SY <--
     ) {
         private val libraryCount by lazy {
             library.values
+                .map { it.values.flatten() }
                 .flatten()
                 .fastDistinctBy { it.libraryManga.manga.id }
                 .size
@@ -1446,13 +1488,12 @@ class LibraryScreenModel(
 
         // SY <--
 
-        fun getLibraryItemsByCategoryId(categoryId: Long): List<LibraryItem>? {
+        fun getLibraryItemsByCategoryId(categoryId: Long): SplitMap? {
             return library.firstNotNullOfOrNull { (k, v) -> v.takeIf { k.id == categoryId } }
         }
 
-        fun getLibraryItemsByPage(page: Int): List<LibraryItem> {
-            val values = library.values.toTypedArray().getOrNull(page).orEmpty()
-            return if (isErrorMode) values.filter { it.libraryManga.hasError } else values
+        fun getLibraryItemsByPage(page: Int): SplitMap {
+            return library.values.toTypedArray().getOrNull(page).orEmpty()
         }
 
         fun getMangaCountForCategory(category: Category): Int? {

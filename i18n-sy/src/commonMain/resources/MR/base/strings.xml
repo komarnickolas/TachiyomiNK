@@ -617,6 +617,7 @@
     <string name="artist">Artist</string>
     <string name="characters">Characters</string>
     <string name="group">Group</string>
+    <string name="split">Split</string>
     <string name="media_id">Media id</string>
     <string name="japanese_title">Japanese Title</string>
     <string name="english_title">English Title</string>

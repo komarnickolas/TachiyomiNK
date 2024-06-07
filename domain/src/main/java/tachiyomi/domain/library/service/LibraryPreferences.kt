@@ -8,6 +8,7 @@ import tachiyomi.domain.library.model.GroupLibraryMode
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibraryGroup
 import tachiyomi.domain.library.model.LibrarySort
+import tachiyomi.domain.library.model.LibrarySplit
 import tachiyomi.domain.manga.model.Manga
 
 class LibraryPreferences(
@@ -223,6 +224,8 @@ class LibraryPreferences(
     // SY -->
 
     fun sortTagsForLibrary() = preferenceStore.getStringSet("sort_tags_for_library", mutableSetOf())
+
+    fun splitLibraryBy() = preferenceStore.getInt("split_by_filter_for_library", LibrarySplit.NONE)
 
     fun groupLibraryUpdateType() = preferenceStore.getEnum("group_library_update_type", GroupLibraryMode.GLOBAL)
 
