@@ -43,7 +43,7 @@ internal fun LibraryList(
         }
         items.forEach { (key, items) ->
             if (key.name.isNotBlank() && items.isNotEmpty()) {
-                item { ListGroupHeader(text = key.name) }
+                item { ListGroupHeader(text = key.name, badgeCount = items.size) }
             }
             items(
                 items = items,

@@ -493,10 +493,11 @@ class LibraryScreenModel(
             }
         }
 
-        return this.mapValues { (_, values) ->
+        return this.mapValues { (category, values) ->
+            val isAscending = groupSort?.isAscending ?: keys.find { it.id == category.id }!!.sort.isAscending
+
             values.mapValues { entry ->
                 // SY -->
-                val isAscending = groupSort?.isAscending ?: keys.find { it.id == entry.key.id }!!.sort.isAscending
                 // SY <--
                 val comparator = if ( /* SY --> */ isAscending /* SY <-- */) {
                     Comparator(sortFn)
@@ -1222,7 +1223,9 @@ class LibraryScreenModel(
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
                 val categoryId = state.categories[index].id
-                val items = state.getLibraryItemsByCategoryId(categoryId)?.values?.flatten()?.fastMap { it.libraryManga }.orEmpty()
+                val items =
+                    state.getLibraryItemsByCategoryId(categoryId)?.values?.flatten()?.fastMap { it.libraryManga }
+                        .orEmpty()
                 val selectedIds = list.fastMap { it.id }
                 val (toRemove, toAdd) = items.fastPartition { it.id in selectedIds }
                 val toRemoveIds = toRemove.fastMap { it.id }
@@ -1497,7 +1500,12 @@ class LibraryScreenModel(
         }
 
         fun getMangaCountForCategory(category: Category): Int? {
-            return if (showMangaCount || !searchQuery.isNullOrEmpty()) library[category]?.size else null
+            return if (showMangaCount || !searchQuery.isNullOrEmpty()) getLibraryItemsByCategoryId(category.id)?.values?.flatten()?.size else null
+        }
+
+        fun getErrorCountForCategory(category: Category): Int? {
+            return if (showMangaCount || !searchQuery.isNullOrEmpty()) getLibraryItemsByCategoryId(category.id)?.values?.flatten()
+                ?.filter { it.libraryManga.hasError }?.size else null
         }
 
         fun getToolbarTitle(

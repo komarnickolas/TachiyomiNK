@@ -8,11 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import tachiyomi.presentation.core.components.Badge
+import tachiyomi.presentation.core.components.BadgeGroup
 import tachiyomi.presentation.core.components.Pill
 
 @Composable
-fun TabText(text: String, badgeCount: Int? = null) {
-    val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
+fun TabText(text: String, badgeCount: Int? = null, errorCount: Int? = null) {
+    val pillAlpha = if (isSystemInDarkTheme()) 0.5f else 0.4f
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -22,12 +24,19 @@ fun TabText(text: String, badgeCount: Int? = null) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (badgeCount != null) {
-            Pill(
-                text = "$badgeCount",
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
-                fontSize = 10.sp,
-            )
+        BadgeGroup {
+            if (badgeCount != null) {
+                Badge(
+                    text = "$badgeCount",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
+                )
+            }
+            if (errorCount != null) {
+                Badge(
+                    text = "$errorCount",
+                    color = MaterialTheme.colorScheme.error.copy(alpha = pillAlpha),
+                )
+            }
         }
     }
 }

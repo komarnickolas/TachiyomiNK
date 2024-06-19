@@ -43,6 +43,7 @@ fun LibraryContent(
     onRefresh: (Category?) -> Boolean,
     onGlobalSearchClicked: () -> Unit,
     getNumberOfMangaForCategory: (Category) -> Int?,
+    getNumberOfErrorsForCategory: (Category) -> Int?,
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
     getLibraryForPage: (Int) -> SplitMap,
@@ -72,6 +73,7 @@ fun LibraryContent(
                 categories = categories,
                 pagerState = pagerState,
                 getNumberOfMangaForCategory = getNumberOfMangaForCategory,
+                getNumberOfErrorsForCategory = getNumberOfErrorsForCategory,
             ) { scope.launch { pagerState.animateScrollToPage(it) } }
         }
 

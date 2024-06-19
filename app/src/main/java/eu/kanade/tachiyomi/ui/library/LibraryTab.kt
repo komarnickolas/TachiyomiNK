@@ -265,6 +265,7 @@ object LibraryTab : Tab {
                             navigator.push(GlobalSearchScreen(screenModel.state.value.searchQuery ?: ""))
                         },
                         getNumberOfMangaForCategory = { state.getMangaCountForCategory(it) },
+                        getNumberOfErrorsForCategory = { state.getErrorCountForCategory(it) },
                         getDisplayMode = { screenModel.getDisplayMode() },
                         getColumnsForOrientation = { screenModel.getColumnsPreferenceForCurrentOrientation(it) },
                     ) { state.getLibraryItemsByPage(it) }

@@ -34,7 +34,7 @@ internal fun LibraryComfortableGrid(
 
         items.forEach { (key, items) ->
             if (key.name.isNotBlank() && items.isNotEmpty()) {
-                item(span = { GridItemSpan(columns) }) { ListGroupHeader(text = key.name) }
+                item(span = { GridItemSpan(columns) }) { ListGroupHeader(text = key.name, badgeCount = items.size) }
             }
             items(
                 items = items,

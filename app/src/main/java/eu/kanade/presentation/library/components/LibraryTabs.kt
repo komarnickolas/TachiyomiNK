@@ -19,6 +19,7 @@ internal fun LibraryTabs(
     categories: List<Category>,
     pagerState: PagerState,
     getNumberOfMangaForCategory: (Category) -> Int?,
+    getNumberOfErrorsForCategory: (Category) -> Int?,
     onTabItemClick: (Int) -> Unit,
 ) {
     // SY -->
@@ -42,6 +43,7 @@ internal fun LibraryTabs(
                         TabText(
                             text = category.visualName,
                             badgeCount = getNumberOfMangaForCategory(category),
+                            errorCount = getNumberOfErrorsForCategory(category),
                         )
                     },
                     unselectedContentColor = MaterialTheme.colorScheme.onSurface,
