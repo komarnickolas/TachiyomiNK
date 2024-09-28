@@ -14,6 +14,10 @@ kotlin {
                 api(libs.injekt.core)
                 api(libs.rxjava)
                 api(libs.jsoup)
+
+                implementation(project.dependencies.platform(compose.bom))
+                implementation(compose.runtime)
+
                 // SY -->
                 api(projects.i18n)
                 api(projects.i18nSy)
@@ -44,7 +48,7 @@ android {
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.freeCompilerArgs += listOf(
+        compilerOptions.freeCompilerArgs.addAll(
             "-Xexpect-actual-classes",
         )
     }

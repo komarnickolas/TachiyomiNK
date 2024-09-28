@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.data.sync.service
 import android.content.Context
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.models.Backup
-import eu.kanade.tachiyomi.data.backup.models.BackupSerializer
 import eu.kanade.tachiyomi.data.sync.SyncNotifier
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.PUT
@@ -39,7 +38,7 @@ class SyncYomiSyncService(
         try {
             val (remoteData, etag) = pullSyncData()
 
-            val finalSyncData = if (remoteData != null){
+            val finalSyncData = if (remoteData != null) {
                 assert(etag.isNotEmpty()) { "ETag should never be empty if remote data is not null" }
                 logcat(LogPriority.DEBUG, "SyncService") {
                     "Try update remote data with ETag($etag)"
@@ -55,7 +54,6 @@ class SyncYomiSyncService(
 
             pushSyncData(finalSyncData, etag)
             return finalSyncData.backup
-
         } catch (e: Exception) {
             logcat(LogPriority.ERROR) { "Error syncing: ${e.message}" }
             notifier.showSyncError(e.message)
@@ -104,7 +102,7 @@ class SyncYomiSyncService(
             }
 
             return try {
-                val backup = protoBuf.decodeFromByteArray(BackupSerializer, byteArray)
+                val backup = protoBuf.decodeFromByteArray(Backup.serializer(), byteArray)
                 return Pair(SyncData(backup = backup), newETag)
             } catch (_: SerializationException) {
                 logcat(LogPriority.INFO) {
@@ -114,7 +112,6 @@ class SyncYomiSyncService(
                 // return default value so we can overwrite it
                 Pair(null, "")
             }
-
         } else {
             val responseBody = response.body.string()
             notifier.showSyncError("Failed to download sync data: $responseBody")
@@ -147,7 +144,7 @@ class SyncYomiSyncService(
             .writeTimeout(timeout, TimeUnit.SECONDS)
             .build()
 
-        val byteArray = protoBuf.encodeToByteArray(BackupSerializer, backup)
+        val byteArray = protoBuf.encodeToByteArray(Backup.serializer(), backup)
         if (byteArray.isEmpty()) {
             throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
         }
@@ -166,11 +163,9 @@ class SyncYomiSyncService(
                 .takeIf { it?.isNotEmpty() == true } ?: throw SyncYomiException("Missing ETag")
             syncPreferences.lastSyncEtag().set(newETag)
             logcat(LogPriority.DEBUG) { "SyncYomi sync completed" }
-
         } else if (response.code == HttpStatus.SC_PRECONDITION_FAILED) {
             // other clients updated remote data, will try next time
             logcat(LogPriority.DEBUG) { "SyncYomi sync failed with 412" }
-
         } else {
             val responseBody = response.body.string()
             notifier.showSyncError("Failed to upload sync data: $responseBody")

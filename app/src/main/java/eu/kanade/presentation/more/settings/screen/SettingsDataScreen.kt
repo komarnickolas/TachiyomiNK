@@ -127,7 +127,17 @@ object SettingsDataScreen : SearchableSettings {
                 val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
-                context.contentResolver.takePersistableUriPermission(uri, flags)
+                // For some reason InkBook devices do not implement the SAF properly. Persistable URI grants do not
+                // work. However, simply retrieving the URI and using it works fine for these devices. Access is not
+                // revoked after the app is closed or the device is restarted.
+                // This also holds for some Samsung devices. Thus, we simply execute inside of a try-catch block and
+                // ignore the exception if it is thrown.
+                try {
+                    context.contentResolver.takePersistableUriPermission(uri, flags)
+                } catch (e: SecurityException) {
+                    logcat(LogPriority.ERROR, e)
+                    context.toast(MR.strings.file_picker_uri_permission_unsupported)
+                }
 
                 UniFile.fromUri(context, uri)?.let {
                     storageDirPref.set(it.uri.toString())
@@ -384,10 +394,22 @@ object SettingsDataScreen : SearchableSettings {
         syncServiceType: SyncManager.SyncService,
         syncPreferences: SyncPreferences,
     ): List<Preference> {
-        return when (syncServiceType) {
+        val navigator = LocalNavigator.currentOrThrow
+        val preferences = when (syncServiceType) {
             SyncManager.SyncService.NONE -> emptyList()
             SyncManager.SyncService.SYNCYOMI -> getSelfHostPreferences(syncPreferences)
             SyncManager.SyncService.GOOGLE_DRIVE -> getGoogleDrivePreferences()
+        }
+
+        return if (syncServiceType != SyncManager.SyncService.NONE) {
+            preferences + Preference.PreferenceItem.TextPreference(
+                title = stringResource(SYMR.strings.pref_choose_what_to_sync),
+                onClick = {
+                    navigator.push(SyncSettingsSelector())
+                },
+            )
+        } else {
+            preferences
         }
     }
 
@@ -505,7 +527,7 @@ object SettingsDataScreen : SearchableSettings {
 
     @Composable
     private fun getSyncNowPref(): Preference.PreferenceGroup {
-        val navigator = LocalNavigator.currentOrThrow
+        val context = LocalContext.current
         return Preference.PreferenceGroup(
             title = stringResource(SYMR.strings.pref_sync_now_group_title),
             preferenceItems = persistentListOf(
@@ -514,7 +536,11 @@ object SettingsDataScreen : SearchableSettings {
                     title = stringResource(SYMR.strings.pref_sync_now),
                     subtitle = stringResource(SYMR.strings.pref_sync_now_subtitle),
                     onClick = {
-                        navigator.push(SyncSettingsSelector())
+                        if (!SyncDataJob.isRunning(context)) {
+                            SyncDataJob.startNow(context)
+                        } else {
+                            context.toast(SYMR.strings.sync_in_progress)
+                        }
                     },
                 ),
             ),

@@ -6,7 +6,6 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.view.LibraryView
 
 object MangaMapper {
-    @Suppress("LongParameterList")
     fun mapManga(
         id: Long,
         source: Long,
@@ -67,7 +66,6 @@ object MangaMapper {
         errorString = errorString,
     )
 
-    @Suppress("LongParameterList")
     fun mapLibraryManga(
         id: Long,
         source: Long,

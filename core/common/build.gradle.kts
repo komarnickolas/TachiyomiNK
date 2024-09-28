@@ -36,7 +36,7 @@ dependencies {
     implementation(libs.image.decoder)
 
     implementation(libs.unifile)
-    implementation(libs.bundles.archive)
+    implementation(libs.libarchive)
 
     api(kotlinx.coroutines.core)
     api(kotlinx.serialization.json)
@@ -56,8 +56,7 @@ dependencies {
 
     // SY -->
     implementation(sylibs.xlog)
-    implementation(libs.zip4j)
     implementation(libs.injekt.core)
-    implementation(libs.exifinterface)
+    implementation(sylibs.exifinterface)
     // SY <--
 }

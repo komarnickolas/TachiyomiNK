@@ -1,3 +1,4 @@
+import mihon.buildlogic.generatedBuildDir
 import mihon.buildlogic.tasks.getLocalesConfigTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -14,25 +15,25 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 api(libs.moko.core)
             }
         }
-
-        androidMain {
-            dependsOn(commonMain)  // https://github.com/icerockdev/moko-resources/issues/562
-        }
     }
 }
+
+val generatedAndroidResourceDir = generatedBuildDir.resolve("android/res")
 
 android {
     namespace = "tachiyomi.i18n"
 
     sourceSets {
-        named("main") {
-            res.srcDir("src/commonMain/resources")
-        }
+        val main by getting
+        main.res.srcDirs(
+            "src/commonMain/resources",
+            generatedAndroidResourceDir,
+        )
     }
 
     lint {
@@ -41,17 +42,17 @@ android {
 }
 
 multiplatformResources {
-    multiplatformResourcesPackage = "tachiyomi.i18n"
+    resourcesPackage.set("tachiyomi.i18n")
 }
 
 tasks {
-    val localesConfigTask = project.getLocalesConfigTask()
+    val localesConfigTask = project.getLocalesConfigTask(generatedAndroidResourceDir)
     preBuild {
         dependsOn(localesConfigTask)
     }
 
     withType<KotlinCompile> {
-        kotlinOptions.freeCompilerArgs += listOf(
+        compilerOptions.freeCompilerArgs.addAll(
             "-Xexpect-actual-classes",
         )
     }

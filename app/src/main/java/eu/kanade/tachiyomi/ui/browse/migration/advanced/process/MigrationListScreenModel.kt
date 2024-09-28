@@ -94,6 +94,7 @@ class MigrationListScreenModel(
     val manualMigrations = MutableStateFlow(0)
 
     val hideNotFound = preferences.hideNotFoundMigration().get()
+    val showOnlyUpdates = preferences.showOnlyUpdatesMigration().get()
 
     val navigateOut = MutableSharedFlow<Unit>()
 
@@ -222,7 +223,9 @@ class MigrationListScreenModel(
                                                 smartSearchEngine.normalSearch(source, mangaObj.ogTitle)
                                             }
 
-                                            if (searchResult != null && !(searchResult.url == mangaObj.url && source.id == mangaObj.source)) {
+                                            if (searchResult != null &&
+                                                !(searchResult.url == mangaObj.url && source.id == mangaObj.source)
+                                            ) {
                                                 val localManga = networkToLocalManga.await(searchResult)
 
                                                 val chapters = if (source is EHentai) {
@@ -236,7 +239,8 @@ class MigrationListScreenModel(
                                                 } catch (e: Exception) {
                                                     return@async2 null
                                                 }
-                                                manga.progress.value = validSources.size to processedSources.incrementAndGet()
+                                                manga.progress.value =
+                                                    validSources.size to processedSources.incrementAndGet()
                                                 localManga to chapters.size
                                             } else {
                                                 null
@@ -313,6 +317,13 @@ class MigrationListScreenModel(
                 if (result == null && hideNotFound) {
                     removeManga(manga)
                 }
+                if (result != null &&
+                    showOnlyUpdates &&
+                    (getChapterInfo(result.id).latestChapter ?: 0.0) <= (manga.chapterInfo.latestChapter ?: 0.0)
+                ) {
+                    removeManga(manga)
+                }
+
                 sourceFinished()
             }
         }
@@ -356,7 +367,10 @@ class MigrationListScreenModel(
 
             dbChapters.forEach { chapter ->
                 if (chapter.isRecognizedNumber) {
-                    val prevChapter = prevMangaChapters.find { it.isRecognizedNumber && it.chapterNumber == chapter.chapterNumber }
+                    val prevChapter = prevMangaChapters.find {
+                        it.isRecognizedNumber &&
+                            it.chapterNumber == chapter.chapterNumber
+                    }
                     if (prevChapter != null) {
                         chapterUpdates += ChapterUpdate(
                             id = chapter.id,

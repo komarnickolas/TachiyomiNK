@@ -3,13 +3,9 @@ package eu.kanade.tachiyomi.data.backup.models
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
-import tachiyomi.domain.manga.model.CustomMangaInfo
 import tachiyomi.domain.manga.model.Manga
 
-@Suppress(
-    "DEPRECATION",
-    "MagicNumber",
-)
+@Suppress("DEPRECATION")
 @Serializable
 data class BackupManga(
     // in 1.x some of these values have different names
@@ -36,7 +32,7 @@ data class BackupManga(
     // Bump by 100 for values that are not saved/implemented in 1.x but are used in 0.x
     @ProtoNumber(100) var favorite: Boolean = true,
     @ProtoNumber(101) var chapterFlags: Int = 0,
-    @ProtoNumber(102) var brokenHistory: List<BrokenBackupHistory> = emptyList(),
+    // @ProtoNumber(102) var brokenHistory, legacy history model with non-compliant proto number
     @ProtoNumber(103) var viewer_flags: Int? = null,
     @ProtoNumber(104) var history: List<BackupHistory> = emptyList(),
     @ProtoNumber(105) var updateStrategy: UpdateStrategy = UpdateStrategy.ALWAYS_UPDATE,

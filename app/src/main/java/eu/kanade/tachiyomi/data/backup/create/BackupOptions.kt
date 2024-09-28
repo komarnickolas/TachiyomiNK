@@ -12,11 +12,13 @@ data class BackupOptions(
     val tracking: Boolean = true,
     val history: Boolean = true,
     val appSettings: Boolean = true,
+    val extensionRepoSettings: Boolean = true,
     val sourceSettings: Boolean = true,
     val privateSettings: Boolean = false,
     // SY -->
     val customInfo: Boolean = true,
     val readEntries: Boolean = true,
+    val savedSearches: Boolean = true,
     // SY <--
 ) {
 
@@ -27,15 +29,18 @@ data class BackupOptions(
         tracking,
         history,
         appSettings,
+        extensionRepoSettings,
         sourceSettings,
         privateSettings,
         // SY -->
         customInfo,
         readEntries,
+        savedSearches,
         // SY <--
     )
 
-    fun anyEnabled() = libraryEntries || appSettings || sourceSettings
+    fun canCreate() =
+        libraryEntries || categories || appSettings || extensionRepoSettings || sourceSettings || savedSearches
 
     companion object {
         val libraryOptions = persistentListOf(
@@ -43,12 +48,6 @@ data class BackupOptions(
                 label = MR.strings.manga,
                 getter = BackupOptions::libraryEntries,
                 setter = { options, enabled -> options.copy(libraryEntries = enabled) },
-            ),
-            Entry(
-                label = MR.strings.categories,
-                getter = BackupOptions::categories,
-                setter = { options, enabled -> options.copy(categories = enabled) },
-                enabled = { it.libraryEntries },
             ),
             Entry(
                 label = MR.strings.chapters,
@@ -68,6 +67,11 @@ data class BackupOptions(
                 setter = { options, enabled -> options.copy(history = enabled) },
                 enabled = { it.libraryEntries },
             ),
+            Entry(
+                label = MR.strings.categories,
+                getter = BackupOptions::categories,
+                setter = { options, enabled -> options.copy(categories = enabled) },
+            ),
             // SY -->
             Entry(
                 label = SYMR.strings.custom_entry_info,
@@ -81,6 +85,11 @@ data class BackupOptions(
                 setter = { options, enabled -> options.copy(readEntries = enabled) },
                 enabled = { it.libraryEntries },
             ),
+            Entry(
+                label = SYMR.strings.saved_searches,
+                getter = BackupOptions::savedSearches,
+                setter = { options, enabled -> options.copy(savedSearches = enabled) },
+            ),
             // SY <--
         )
 
@@ -89,6 +98,11 @@ data class BackupOptions(
                 label = MR.strings.app_settings,
                 getter = BackupOptions::appSettings,
                 setter = { options, enabled -> options.copy(appSettings = enabled) },
+            ),
+            Entry(
+                label = MR.strings.extensionRepo_settings,
+                getter = BackupOptions::extensionRepoSettings,
+                setter = { options, enabled -> options.copy(extensionRepoSettings = enabled) },
             ),
             Entry(
                 label = MR.strings.source_settings,
@@ -110,11 +124,13 @@ data class BackupOptions(
             tracking = array[3],
             history = array[4],
             appSettings = array[5],
-            sourceSettings = array[6],
-            privateSettings = array[7],
+            extensionRepoSettings = array[6],
+            sourceSettings = array[7],
+            privateSettings = array[8],
             // SY -->
-            customInfo = array[8],
-            readEntries = array[9],
+            customInfo = array[9],
+            readEntries = array[10],
+            savedSearches = array[11],
             // SY <--
         )
     }

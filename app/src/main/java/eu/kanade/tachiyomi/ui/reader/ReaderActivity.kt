@@ -3,10 +3,11 @@ package eu.kanade.tachiyomi.ui.reader
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.assist.AssistContent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.core.content.getSystemService
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.transition.doOnEnd
@@ -269,6 +271,9 @@ class ReaderActivity : BaseActivity() {
                     is ReaderViewModel.Event.ShareImage -> {
                         onShareImageResult(event.uri, event.page /* SY --> */, event.secondPage /* SY <-- */)
                     }
+                    is ReaderViewModel.Event.CopyImage -> {
+                        onCopyImageResult(event.uri)
+                    }
                     is ReaderViewModel.Event.SetCoverResult -> {
                         onSetAsCoverResult(event.result)
                     }
@@ -432,10 +437,12 @@ class ReaderActivity : BaseActivity() {
             val landscapeVerticalSeekbar by readerPreferences.landscapeVerticalSeekbar().collectAsState()
             val leftHandedVerticalSeekbar by readerPreferences.leftVerticalSeekbar().collectAsState()
             val configuration = LocalConfiguration.current
-            val verticalSeekbarLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && landscapeVerticalSeekbar
+            val verticalSeekbarLandscape =
+                configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && landscapeVerticalSeekbar
             val verticalSeekbarHorizontal = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
             val viewerIsVertical = (state.viewer is WebtoonViewer || state.viewer is VerticalPagerViewer)
-            val showVerticalSeekbar = !forceHorizontalSeekbar && (verticalSeekbarLandscape || verticalSeekbarHorizontal) && viewerIsVertical
+            val showVerticalSeekbar =
+                !forceHorizontalSeekbar && (verticalSeekbarLandscape || verticalSeekbarHorizontal) && viewerIsVertical
             val navBarType = when {
                 !showVerticalSeekbar -> NavBarType.Bottom
                 leftHandedVerticalSeekbar -> NavBarType.VerticalLeft
@@ -822,7 +829,8 @@ class ReaderActivity : BaseActivity() {
         } else {
             if (readerPreferences.fullscreen().get()) {
                 windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
-                windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                windowInsetsController.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
         }
     }
@@ -1025,7 +1033,13 @@ class ReaderActivity : BaseActivity() {
         // SY -->
         val currentPageText = if (hasExtraPage) {
             val invertDoublePage = (viewModel.state.value.viewer as? PagerViewer)?.config?.invertDoublePages ?: false
-            if ((resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_LTR) xor invertDoublePage) "${page.number}-${page.number + 1}" else "${page.number + 1}-${page.number}"
+            if ((resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_LTR) xor
+                invertDoublePage
+            ) {
+                "${page.number}-${page.number + 1}"
+            } else {
+                "${page.number + 1}-${page.number}"
+            }
         } else {
             "${page.number}"
         }
@@ -1087,7 +1101,16 @@ class ReaderActivity : BaseActivity() {
 
         // SY -->
         val text = if (secondPage != null) {
-            stringResource(SYMR.strings.share_pages_info, manga.title, chapter.name, if (resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_LTR) "${page.number}-${page.number + 1}" else "${page.number + 1}-${page.number}")
+            stringResource(
+                SYMR.strings.share_pages_info, manga.title, chapter.name,
+                if (resources.configuration.layoutDirection ==
+                    View.LAYOUT_DIRECTION_LTR
+                ) {
+                    "${page.number}-${page.number + 1}"
+                } else {
+                    "${page.number + 1}-${page.number}"
+                },
+            )
         } else {
             stringResource(MR.strings.share_page_info, manga.title, chapter.name, page.number)
         }
@@ -1098,6 +1121,12 @@ class ReaderActivity : BaseActivity() {
             message = /* SY --> */ text, // SY <--
         )
         startActivity(Intent.createChooser(intent, stringResource(MR.strings.action_share)))
+    }
+
+    private fun onCopyImageResult(uri: Uri) {
+        val clipboardManager = applicationContext.getSystemService<ClipboardManager>() ?: return
+        val clipData = ClipData.newUri(applicationContext.contentResolver, "", uri)
+        clipboardManager.setPrimaryClip(clipData)
     }
 
     /**
@@ -1245,11 +1274,14 @@ class ReaderActivity : BaseActivity() {
                 .onEach {
                     if (viewModel.state.value.viewer !is PagerViewer) return@onEach
                     reloadChapters(
-                        !it && when (readerPreferences.pageLayout().get()) {
-                            PagerConfig.PageLayout.DOUBLE_PAGES -> true
-                            PagerConfig.PageLayout.AUTOMATIC -> resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                            else -> false
-                        },
+                        !it &&
+                            when (readerPreferences.pageLayout().get()) {
+                                PagerConfig.PageLayout.DOUBLE_PAGES -> true
+                                PagerConfig.PageLayout.AUTOMATIC ->
+                                    resources.configuration.orientation ==
+                                        Configuration.ORIENTATION_LANDSCAPE
+                                else -> false
+                            },
                         true,
                     )
                 }

@@ -34,7 +34,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.all.MergedSource
 import eu.kanade.tachiyomi.util.prepUpdateCover
-import eu.kanade.tachiyomi.util.shouldDownloadNewChapters
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
 import eu.kanade.tachiyomi.util.system.isConnectedToWifi
@@ -58,17 +57,16 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
+import mihon.domain.chapter.interactor.FilterChaptersForDownload
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.UnsortedPreferences
-import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.NoChaptersException
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.library.model.GroupLibraryMode
 import tachiyomi.domain.library.model.LibraryGroup
 import tachiyomi.domain.library.model.LibraryManga
@@ -108,16 +106,15 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     CoroutineWorker(context, workerParams) {
 
     private val sourceManager: SourceManager = Injekt.get()
-    private val downloadPreferences: DownloadPreferences = Injekt.get()
     private val libraryPreferences: LibraryPreferences = Injekt.get()
     private val downloadManager: DownloadManager = Injekt.get()
     private val coverCache: CoverCache = Injekt.get()
     private val getLibraryManga: GetLibraryManga = Injekt.get()
     private val getManga: GetManga = Injekt.get()
     private val updateManga: UpdateManga = Injekt.get()
-    private val getCategories: GetCategories = Injekt.get()
     private val syncChaptersWithSource: SyncChaptersWithSource = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
+    private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get()
 
     // SY -->
     private val getFavorites: GetFavorites = Injekt.get()
@@ -363,14 +360,17 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                     async {
                         semaphore.withPermit {
                             if (
-                                mdlistLogged && mangaInSource.firstOrNull()
+                                mdlistLogged &&
+                                mangaInSource.firstOrNull()
                                     ?.let { it.manga.source in mangaDexSourceIds } == true
                             ) {
                                 launch {
                                     mangaInSource.forEach { (manga) ->
                                         try {
                                             val tracks = getTracks.await(manga.id)
-                                            if (tracks.isEmpty() || tracks.none { it.trackerId == TrackerManager.MDLIST }) {
+                                            if (tracks.isEmpty() ||
+                                                tracks.none { it.trackerId == TrackerManager.MDLIST }
+                                            ) {
                                                 val track = mdList.createInitialTracker(manga)
                                                 insertTrack.await(mdList.refresh(track).toDomainTrack(false)!!)
                                             }
@@ -400,10 +400,14 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             // SY -->
                                             .sortedByDescending { it.sourceOrder }.run {
                                                 if (libraryPreferences.libraryReadDuplicateChapters().get()) {
-                                                    val readChapters = getChaptersByMangaId.await(manga.id).filter { it.read }
+                                                    val readChapters = getChaptersByMangaId.await(manga.id).filter {
+                                                        it.read
+                                                    }
                                                     val newReadChapters = this.filter { chapter ->
                                                         chapter.chapterNumber > 0 &&
-                                                            readChapters.any { it.chapterNumber == chapter.chapterNumber }
+                                                            readChapters.any {
+                                                                it.chapterNumber == chapter.chapterNumber
+                                                            }
                                                     }
 
                                                     if (newReadChapters.isNotEmpty()) {
@@ -415,12 +419,13 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                                     this
                                                 }
                                             }
-                                        //SY <--
+                                        // SY <--
 
                                         if (newChapters.isNotEmpty()) {
-                                            val categoryIds = getCategories.await(manga.id).map { it.id }
-                                            if (manga.shouldDownloadNewChapters(categoryIds, downloadPreferences)) {
-                                                downloadChapters(manga, newChapters)
+                                            val chaptersToDownload = filterChaptersForDownload.await(manga, newChapters)
+
+                                            if (chaptersToDownload.isNotEmpty()) {
+                                                downloadChapters(manga, chaptersToDownload)
                                                 hasDownloads.set(true)
                                             }
 
@@ -769,7 +774,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 val constraints = Constraints(
                     requiredNetworkType = if (DEVICE_NETWORK_NOT_METERED in restrictions) {
                         NetworkType.UNMETERED
-                    } else { NetworkType.CONNECTED },
+                    } else {
+                        NetworkType.CONNECTED
+                    },
                     requiresCharging = DEVICE_CHARGING in restrictions,
                     requiresBatteryNotLow = true,
                 )

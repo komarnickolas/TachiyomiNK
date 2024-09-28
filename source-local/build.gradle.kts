@@ -15,10 +15,6 @@ kotlin {
                 // SY <--
 
                 implementation(libs.unifile)
-                implementation(libs.bundles.archive)
-                // SY -->
-                implementation(libs.zip4j)
-                // SY <--
             }
         }
         val androidMain by getting {
@@ -46,7 +42,7 @@ android {
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.freeCompilerArgs += listOf(
+        compilerOptions.freeCompilerArgs.addAll(
             "-Xexpect-actual-classes",
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
         )

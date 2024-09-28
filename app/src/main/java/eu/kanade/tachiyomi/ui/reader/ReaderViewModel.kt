@@ -134,7 +134,7 @@ class ReaderViewModel @JvmOverloads constructor(
     private val getMergedMangaById: GetMergedMangaById = Injekt.get(),
     private val getMergedReferencesById: GetMergedReferencesById = Injekt.get(),
     private val getMergedChaptersByMangaId: GetMergedChaptersByMangaId = Injekt.get(),
-    private val setReadStatus: SetReadStatus = Injekt.get()
+    private val setReadStatus: SetReadStatus = Injekt.get(),
     // SY <--
 ) : ViewModel() {
 
@@ -189,8 +189,9 @@ class ReaderViewModel @JvmOverloads constructor(
         // SY -->
         val (chapters, mangaMap) = runBlocking {
             if (manga.source == MERGED_SOURCE_ID) {
-                getMergedChaptersByMangaId.await(manga.id, applyScanlatorFilter = true) to getMergedMangaById.await(manga.id)
-                    .associateBy { it.id }
+                getMergedChaptersByMangaId.await(manga.id, applyScanlatorFilter = true) to
+                    getMergedMangaById.await(manga.id)
+                        .associateBy { it.id }
             } else {
                 getChaptersByMangaId.await(manga.id, applyScanlatorFilter = true) to null
             }
@@ -701,13 +702,18 @@ class ReaderViewModel @JvmOverloads constructor(
                 // SY -->
                 if (readerChapter.chapter.chapter_number > 0 && readerPreferences.markReadDupe().get()) {
                     getChaptersByMangaId.await(manga!!.id).sortedByDescending { it.sourceOrder }
-                        .filter { 
+                        .filter {
                             it.id != readerChapter.chapter.id &&
                                 !it.read &&
                                 it.chapterNumber.toFloat() == readerChapter.chapter.chapter_number
                         }
                         .ifEmpty { null }
-                        ?.also { setReadStatus.await(true, *it.toTypedArray()) }
+                        ?.also {
+                            setReadStatus.await(true, *it.toTypedArray())
+                            it.forEach { chapter ->
+                                deleteChapterIfNeeded(ReaderChapter(chapter))
+                            }
+                        }
                 }
                 if (manga?.isEhBasedManga() == true) {
                     viewModelScope.launchNonCancellable {
@@ -1156,7 +1162,7 @@ class ReaderViewModel @JvmOverloads constructor(
      * get a path to the file and it has to be decompressed somewhere first. Only the last shared
      * image will be kept so it won't be taking lots of internal disk space.
      */
-    fun shareImage(useExtraPage: Boolean) {
+    fun shareImage(copyToClipboard: Boolean, useExtraPage: Boolean) {
         // SY -->
         val page = if (useExtraPage) {
             (state.value.dialog as? Dialog.PageActions)?.extraPage
@@ -1182,7 +1188,7 @@ class ReaderViewModel @JvmOverloads constructor(
                         location = Location.Cache,
                     ),
                 )
-                eventChannel.send(Event.ShareImage(uri, page))
+                eventChannel.send(if (copyToClipboard) Event.CopyImage(uri) else Event.ShareImage(uri, page))
             }
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
@@ -1190,7 +1196,7 @@ class ReaderViewModel @JvmOverloads constructor(
     }
 
     // SY -->
-    fun shareImages() {
+    fun shareImages(copyToClipboard: Boolean) {
         val (firstPage, secondPage) = (state.value.dialog as? Dialog.PageActions ?: return)
         val viewer = state.value.viewer as? PagerViewer ?: return
         val isLTR = (viewer !is R2LPagerViewer) xor (viewer.config.invertDoublePages)
@@ -1214,7 +1220,7 @@ class ReaderViewModel @JvmOverloads constructor(
                     location = Location.Cache,
                     manga = manga,
                 )
-                eventChannel.send(Event.ShareImage(uri, firstPage, secondPage))
+                eventChannel.send(if (copyToClipboard) Event.CopyImage(uri) else Event.ShareImage(uri, firstPage, secondPage))
             }
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
@@ -1382,5 +1388,6 @@ class ReaderViewModel @JvmOverloads constructor(
             val page: ReaderPage/* SY --> */,
             val secondPage: ReaderPage? = null, /* SY <-- */
         ) : Event
+        data class CopyImage(val uri: Uri) : Event
     }
 }
